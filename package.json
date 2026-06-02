@@ -1,7 +1,7 @@
 {
   "name": "finance-assistant",
   "version": "0.1.0",
-  "description": "Personal Finance Assistant - Learn tool calling patterns with Claude API",
+  "description": "Personal Finance Assistant - Learn tool calling patterns with Gemini (Google Generative AI)",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -22,7 +22,7 @@
     "example:12": "node examples/12_streaming.js"
   },
   "keywords": [
-    "claude",
+    "gemini",
     "ai",
     "tool-calling",
     "finance",
@@ -31,7 +31,7 @@
   "author": "You",
   "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.28.0",
+    "@google/generative-ai": "^0.24.1",
     "dotenv": "^17.4.2"
   },
   "engines": {

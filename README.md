@@ -1,5 +1,5 @@
 Finance Assistant - Tool Calling Patterns Learning Project
-A hands-on project to understand all 12 tool calling patterns by building a personal finance assistant that uses the Claude API.
+A hands-on project to understand all 12 tool calling patterns by building a personal finance assistant that uses the Gemini model.
 What You'll Learn
 This project demonstrates:
 
@@ -122,10 +122,10 @@ Copy the `.env.example` template and add your API key:
 cp .env.example .env
 ```
 
-Edit `.env` and add your Anthropic API key (get one free at [console.anthropic.com](https://console.anthropic.com)):
+Edit `.env` and add your Gemini API key (get one from Google Cloud Console / Generative AI):
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-your_actual_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 NODE_ENV=development
 LOG_LEVEL=debug
 MAX_TOOL_CALLS=10
@@ -183,7 +183,7 @@ CLI Parser (src/index.js)
 ↓
 Tool Runner (src/utils/toolRunner.js)
 ↓
-Claude API (decides which tool to use)
+Gemini model (decides which tool to use)
 ↓
 Tool Execution (src/tools/*.js)
 ↓
@@ -214,9 +214,9 @@ Result to User
 - Streaming
 - Full feature parity
 
-## Tool Descriptions (for Claude to understand)
+## Tool Descriptions (for Gemini to understand)
 
-The system provides Claude with tool definitions. Each tool:
+The system provides Gemini with tool definitions. Each tool:
 - Has a clear name and description
 - Defines input parameters (types, constraints)
 - Returns structured output (JSON)
@@ -279,7 +279,7 @@ git commit -m "Learn concept 1: Parallel tool calling"
 
 All settings in `.env`:
 
-- `ANTHROPIC_API_KEY` — Your Claude API key
+- `GEMINI_API_KEY` — Your Gemini API key
 - `NODE_ENV` — `development` or `production`
 - `LOG_LEVEL` — `debug`, `info`, `warn`, `error`
 - `MAX_TOOL_CALLS` — Max tools per request (default: 10)
@@ -302,10 +302,10 @@ This shows:
 
 ## Useful Links
 
-- [Anthropic Documentation](https://docs.anthropic.com)
-- [Claude API Reference](https://docs.anthropic.com/en/docs/intro)
-- [Tool Use Guide](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)
-- [Prompt Engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- [Google Generative AI docs](https://developers.generativeai.google)
+- [Gemini model reference](https://developers.generativeai.google/ui/docs)
+- [Tool Use Guide (Generative Models)](https://developers.generativeai.google/guide)
+- [Prompt Engineering (general guidance)](https://developers.generativeai.google/guide/best-practices/prompting)
 
 ## Next Steps
 

@@ -66,11 +66,16 @@ class Logger {
     console.log(`✅ ${COLORS.fgGreen}[TOOL_SUCCESS]${COLORS.reset} ${toolName} returned:`, JSON.stringify(result));
   }
 
+  // Backwards-compatible alias used elsewhere in the codebase
+  toolResult(toolName, result) {
+    this.toolSuccess(toolName, result);
+  }
+
   toolError(toolName, errorMsg) {
     console.log(`❌ ${COLORS.fgRed}[TOOL_ERROR]${COLORS.reset} ${toolName} failed: ${errorMsg}`);
   }
 
-  // Token & Cost Tracking (Claude 3.5 Sonnet: $3/M input, $15/M output tokens)
+  // Token & Cost Tracking (approximate; adjust per model/provider pricing)
   trackUsage(usage) {
     if (!usage) return;
     const inputTokens = usage.input_tokens || 0;

@@ -1,4 +1,3 @@
-import { cache } from '../utils/cache.js';
 import { logger } from '../utils/logger.js';
 
 export const currencySchema = {
@@ -27,13 +26,6 @@ const FALLBACK_RATES = {
 };
 
 async function fetchRates(fromCurrency) {
-  const cacheKey = `rates_${fromCurrency.toUpperCase()}`;
-  const cachedRates = cache.get(cacheKey);
-  if (cachedRates) {
-    logger.debug(`[Currency] Using cached exchange rates for ${fromCurrency}`);
-    return cachedRates;
-  }
-
   try {
     logger.debug(`[Currency] Fetching live rates for ${fromCurrency} from open.er-api.com`);
     const response = await fetch(`https://open.er-api.com/v6/latest/${fromCurrency.toUpperCase()}`);
@@ -42,7 +34,6 @@ async function fetchRates(fromCurrency) {
     }
     const data = await response.json();
     if (data.result === 'success' && data.rates) {
-      cache.set(cacheKey, data.rates);
       return data.rates;
     }
     throw new Error('Invalid response structure');

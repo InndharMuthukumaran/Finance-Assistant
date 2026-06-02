@@ -1,10 +1,10 @@
-import { anthropic, DEFAULT_MODEL } from '../utils/anthropic.js';
+import { getModel } from '../utils/gemini.js';
 import { allToolsSchemas, executeTool } from '../utils/toolRunner.js';
 import { logger } from '../utils/logger.js';
 
 /**
  * Parallel Tool Calling Pattern:
- * Claude returns multiple tool_use blocks in a single turn.
+ * Gemini returns multiple functionCall parts in a single response.
  * We resolve all of them concurrently using Promise.all to optimize latency.
  */
 export async function runParallelDemo() {
@@ -12,53 +12,41 @@ export async function runParallelDemo() {
   logger.info(`Starting Parallel Tool Calling Demo...`);
   logger.info(`Query: "${prompt}"`);
 
-  const messages = [{ role: 'user', content: prompt }];
+  const model = getModel(allToolsSchemas);
+  const chat = model.startChat();
 
-  const response = await anthropic.messages.create({
-    model: DEFAULT_MODEL,
-    max_tokens: 1024,
-    tools: allToolsSchemas,
-    messages
-  });
+  // Send the prompt to Gemini
+  const result = await chat.sendMessage(prompt);
+  const response = result.response;
+  const functionCalls = response.functionCalls();
 
-  logger.trackUsage(response.usage);
-
-  const toolCalls = response.content.filter(block => block.type === 'tool_use');
-  
-  if (toolCalls.length === 0) {
-    logger.warn(`No tools were called. Response: ${response.content[0].text}`);
+  if (!functionCalls || functionCalls.length === 0) {
+    console.log(`\n💬 Gemini's Response:\n${response.text()}\n`);
+    logger.printSessionSummary();
     return;
   }
 
-  logger.info(`Claude requested ${toolCalls.length} tool calls in parallel.`);
+  logger.info(`Gemini requested ${functionCalls.length} tool call(s) in parallel.`);
 
-  // Resolve all promises concurrently
-  const toolResults = await Promise.all(
-    toolCalls.map(async (toolCall) => {
-      const result = await executeTool(toolCall.name, toolCall.input);
+  // Execute ALL tool calls concurrently using Promise.all
+  const toolResponses = await Promise.all(
+    functionCalls.map(async (fc) => {
+      logger.info(`  → Executing tool in parallel: "${fc.name}"`);
+      const toolResult = await executeTool(fc.name, fc.args);
       return {
-        type: 'tool_result',
-        tool_use_id: toolCall.id,
-        content: JSON.stringify(result)
+        functionResponse: {
+          name: fc.name,
+          response: { result: JSON.stringify(toolResult) }
+        }
       };
     })
   );
 
-  logger.info(`Sending parallel tool results back to Claude...`);
+  logger.info(`Sending all ${toolResponses.length} parallel results back to Gemini...`);
 
-  const followUp = await anthropic.messages.create({
-    model: DEFAULT_MODEL,
-    max_tokens: 1024,
-    tools: allToolsSchemas,
-    messages: [
-      ...messages,
-      { role: 'assistant', content: response.content },
-      { role: 'user', content: toolResults }
-    ]
-  });
+  // Send all results back to Gemini in one shot
+  const finalResult = await chat.sendMessage(toolResponses);
+  console.log(`\n💬 Gemini's Final Response:\n${finalResult.response.text()}\n`);
 
-  logger.trackUsage(followUp.usage);
-  
-  console.log(`\n💬 Claude's Final Response:\n${followUp.content[0].text}\n`);
   logger.printSessionSummary();
 }

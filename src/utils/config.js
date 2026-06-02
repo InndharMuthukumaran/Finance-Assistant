@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const config = {
-  apiKey: process.env.ANTHROPIC_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY,
   nodeEnv: process.env.NODE_ENV || 'development',
   logLevel: process.env.LOG_LEVEL || 'debug',
   maxToolCalls: parseInt(process.env.MAX_TOOL_CALLS || '10', 10),
@@ -13,7 +13,7 @@ const config = {
 
 // Simple check
 if (!config.apiKey) {
-  console.warn('⚠️ WARNING: ANTHROPIC_API_KEY is not set in your .env file.');
+  console.warn('⚠️ WARNING: GEMINI_API_KEY is not set in your .env file.');
 }
 
 export default config;
