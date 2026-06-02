@@ -1,0 +1,45 @@
+# Environment variables (but keep .env.example as a template)
+.env
+.env.local
+.env.*.local
+!.env.example
+ 
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+ 
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+ 
+# Logs
+logs/
+*.log
+ 
+# Build & dist
+dist/
+build/
+.next/
+ 
+# Temporary files
+tmp/
+temp/
+*.tmp
+ 
+# OS
+.DS_Store
+Thumbs.db
+ 
+# Testing
+coverage/
+.nyc_output/
+ 
+# Runtime data
+data/*.json
+!data/.gitkeep
