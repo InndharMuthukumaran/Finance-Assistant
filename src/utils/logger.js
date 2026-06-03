@@ -78,18 +78,46 @@ class Logger {
   // Token & Cost Tracking (approximate; adjust per model/provider pricing)
   trackUsage(usage) {
     if (!usage) return;
-    const inputTokens = usage.input_tokens || 0;
-    const outputTokens = usage.output_tokens || 0;
-    
-    const inputCost = (inputTokens / 1_000_000) * 3.00;
-    const outputCost = (outputTokens / 1_000_000) * 15.00;
+
+    const parseTokenValue = (value) => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') return Number(value) || 0;
+      return 0;
+    };
+
+    const promptTokens = parseTokenValue(
+      usage.promptTokenCount ?? usage.prompt_tokens ?? usage.promptTokens ?? usage.prompt_token_count
+    );
+    const candidateTokens = parseTokenValue(
+      usage.candidatesTokenCount ?? usage.candidates_tokens ?? usage.candidateTokens ?? usage.candidates_token_count
+    );
+    const inputTokens = parseTokenValue(
+      usage.input_tokens ?? usage.inputTokens ?? usage.input_tokens_total ?? usage.inputTokensTotal
+    );
+    const outputTokens = parseTokenValue(
+      usage.output_tokens ?? usage.outputTokens ?? usage.output_tokens_total ?? usage.outputTokensTotal
+    );
+    const totalTokens = parseTokenValue(
+      usage.totalTokenCount ?? usage.total_tokens ?? usage.totalTokens ?? usage.total_token_count
+    );
+
+    const derivedInputTokens = inputTokens || promptTokens;
+    const derivedOutputTokens = outputTokens || candidateTokens;
+    const derivedTotalTokens = totalTokens || derivedInputTokens + derivedOutputTokens;
+
+    const inputCost = (derivedInputTokens / 1_000_000) * 3.0;
+    const outputCost = (derivedOutputTokens / 1_000_000) * 15.0;
     const cost = inputCost + outputCost;
 
-    this.totalInputTokens += inputTokens;
-    this.totalOutputTokens += outputTokens;
+    this.totalInputTokens += derivedInputTokens;
+    this.totalOutputTokens += derivedOutputTokens;
     this.totalCost += cost;
 
-    this.debug(`Tokens: In=${inputTokens}, Out=${outputTokens} | Cost: $${cost.toFixed(6)}`);
+    if (derivedInputTokens || derivedOutputTokens || derivedTotalTokens) {
+      this.debug(
+        `Usage tracked: In=${derivedInputTokens}, Out=${derivedOutputTokens}, Total=${derivedTotalTokens}, Cost=$${cost.toFixed(6)}`
+      );
+    }
   }
 
   printSessionSummary() {

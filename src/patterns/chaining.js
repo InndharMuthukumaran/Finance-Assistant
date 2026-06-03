@@ -24,6 +24,7 @@ export async function runChainingDemo() {
 
     const result = await chat.sendMessage(nextMessage);
     const response = result.response;
+    logger.trackUsage(response.usageMetadata);
     const functionCalls = response.functionCalls();
 
     // No more tool calls → Gemini has the final answer

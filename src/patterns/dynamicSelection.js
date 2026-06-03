@@ -78,6 +78,7 @@ async function processQueryWithDynamicSelection(query, expectedTools) {
     // Send the query to Gemini
     const result = await chat.sendMessage(query);
     const response = result.response;
+    logger.trackUsage(response.usageMetadata);
     const functionCalls = response.functionCalls();
 
     if (!functionCalls || functionCalls.length === 0) {
@@ -116,6 +117,7 @@ async function processQueryWithDynamicSelection(query, expectedTools) {
 
     // Send results back for final synthesis
     const finalResult = await chat.sendMessage(toolResponses);
+    logger.trackUsage(finalResult.response.usageMetadata);
     console.log(`\n💬 Gemini's Synthesized Response:\n${finalResult.response.text()}`);
 
   } catch (error) {

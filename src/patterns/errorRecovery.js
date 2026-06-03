@@ -146,6 +146,7 @@ export async function runErrorRecoveryDemo() {
   try {
     const result = await chat.sendMessage(prompt);
     const response = result.response;
+    logger.trackUsage(response.usageMetadata);
     const functionCalls = response.functionCalls();
 
     if (!functionCalls || functionCalls.length === 0) {
@@ -189,6 +190,7 @@ export async function runErrorRecoveryDemo() {
 
     logger.info(`Sending ${toolResponses.length} tool results back to Gemini...`);
     const finalResult = await chat.sendMessage(toolResponses);
+    logger.trackUsage(finalResult.response.usageMetadata);
     console.log(`\n💬 Gemini's Final Response:\n${finalResult.response.text()}\n`);
 
   } catch (error) {

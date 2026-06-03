@@ -18,6 +18,7 @@ export async function runParallelDemo() {
   // Send the prompt to Gemini
   const result = await chat.sendMessage(prompt);
   const response = result.response;
+  logger.trackUsage(response.usageMetadata);
   const functionCalls = response.functionCalls();
 
   if (!functionCalls || functionCalls.length === 0) {
@@ -46,6 +47,7 @@ export async function runParallelDemo() {
 
   // Send all results back to Gemini in one shot
   const finalResult = await chat.sendMessage(toolResponses);
+  logger.trackUsage(finalResult.response.usageMetadata);
   console.log(`\n💬 Gemini's Final Response:\n${finalResult.response.text()}\n`);
 
   logger.printSessionSummary();
