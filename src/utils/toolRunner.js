@@ -1,15 +1,21 @@
 import { calculate, calculatorSchema } from '../tools/calculator.js';
 import { convertCurrency, currencySchema } from '../tools/currency.js';
+import { manageBudget, budgetSchema } from '../tools/budget.js';
+import { trackExpense, expenseSchema } from '../tools/expense.js';
 import { logger } from './logger.js';
 
 export const allToolsSchemas = [
   calculatorSchema,
-  currencySchema
+  currencySchema,
+  budgetSchema,
+  expenseSchema
 ];
 
 const toolsMap = {
   calculate,
-  convert_currency: convertCurrency
+  convert_currency: convertCurrency,
+  manage_budget: manageBudget,
+  track_expense: trackExpense
 };
 
 /**
