@@ -1,19 +1,16 @@
+import chalk from 'chalk';
 import config from './config.js';
 
-// ANSI terminal color codes for premium visual logging
-const COLORS = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  dim: '\x1b[2m',
-  fgRed: '\x1b[31m',
-  fgGreen: '\x1b[32m',
-  fgYellow: '\x1b[33m',
-  fgBlue: '\x1b[34m',
-  fgMagenta: '\x1b[35m',
-  fgCyan: '\x1b[36m',
-  bgBlue: '\x1b[44m',
-};
-
+/**
+ * Log Levels (from least to most severe):
+ * - debug   (0): Detailed diagnostic info (token counts, internal calls)
+ * - info    (1): Standard operational messages (what's happening now)
+ * - warn    (2): Warnings (something unusual, but app continues)
+ * - error   (3): Errors (something failed)
+ * 
+ * Filtering: Only logs >= current level are shown.
+ * Example: if level=info(1), shows info + warn + error (not debug)
+ */
 const LOG_LEVELS = {
   debug: 0,
   info: 1,
@@ -31,98 +28,73 @@ class Logger {
 
   debug(msg, ...args) {
     if (this.level <= LOG_LEVELS.debug) {
-      console.log(`${COLORS.dim}[DEBUG] ${msg}${COLORS.reset}`, ...args);
+      console.log(chalk.dim(`[DEBUG] ${msg}`), ...args);
     }
   }
 
   info(msg, ...args) {
     if (this.level <= LOG_LEVELS.info) {
-      console.log(`${COLORS.fgCyan}[INFO]${COLORS.reset} ${msg}`, ...args);
+      console.log(chalk.cyan(`[INFO]`) + ` ${msg}`, ...args);
     }
   }
 
   warn(msg, ...args) {
     if (this.level <= LOG_LEVELS.warn) {
-      console.warn(`${COLORS.fgYellow}[WARN] ⚠️ ${msg}${COLORS.reset}`, ...args);
+      console.warn(chalk.yellow(`[WARN] ⚠️`) + ` ${msg}`, ...args);
     }
   }
 
   error(msg, ...args) {
     if (this.level <= LOG_LEVELS.error) {
-      console.error(`${COLORS.fgRed}[ERROR] ❌ ${msg}${COLORS.reset}`, ...args);
+      console.error(chalk.red(`[ERROR] ❌`) + ` ${msg}`, ...args);
     }
   }
 
   // Visual highlights for agent steps
   agentStep(agentName, message) {
-    console.log(`\n🤖 ${COLORS.bright}${COLORS.fgMagenta}[${agentName}]${COLORS.reset} ${message}`);
+    console.log(`\n🤖 ${chalk.bold.magenta(`[${agentName}]`)} ${message}`);
   }
 
   toolCall(toolName, params) {
-    console.log(`🔌 ${COLORS.fgBlue}[TOOL_CALL]${COLORS.reset} Executing ${COLORS.bright}${toolName}${COLORS.reset} with params:`, JSON.stringify(params));
+    console.log(`🔌 ${chalk.blue(`[TOOL_CALL]`)} Executing ${chalk.bold(toolName)} with params:`, JSON.stringify(params));
   }
 
   toolSuccess(toolName, result) {
-    console.log(`✅ ${COLORS.fgGreen}[TOOL_SUCCESS]${COLORS.reset} ${toolName} returned:`, JSON.stringify(result));
+    console.log(`✅ ${chalk.green(`[TOOL_SUCCESS]`)} ${toolName} returned:`, JSON.stringify(result));
   }
-
-  // Backwards-compatible alias used elsewhere in the codebase
-  toolResult(toolName, result) {
-    this.toolSuccess(toolName, result);
-  }
-
   toolError(toolName, errorMsg) {
-    console.log(`❌ ${COLORS.fgRed}[TOOL_ERROR]${COLORS.reset} ${toolName} failed: ${errorMsg}`);
+    console.log(`❌ ${chalk.red(`[TOOL_ERROR]`)} ${toolName} failed: ${errorMsg}`);
   }
 
-  // Token & Cost Tracking (approximate; adjust per model/provider pricing)
+  // Token & Cost Tracking for Gemini API
+  // Gemini pricing: $3 per 1M input tokens, $15 per 1M output tokens
   trackUsage(usage) {
     if (!usage) return;
 
-    const parseTokenValue = (value) => {
-      if (typeof value === 'number') return value;
-      if (typeof value === 'string') return Number(value) || 0;
-      return 0;
-    };
+    // Gemini API returns: promptTokenCount, candidatesTokenCount, totalTokenCount
+    const inputTokens = usage.promptTokenCount || 0;
+    const outputTokens = usage.candidatesTokenCount || 0;
 
-    const promptTokens = parseTokenValue(
-      usage.promptTokenCount ?? usage.prompt_tokens ?? usage.promptTokens ?? usage.prompt_token_count
-    );
-    const candidateTokens = parseTokenValue(
-      usage.candidatesTokenCount ?? usage.candidates_tokens ?? usage.candidateTokens ?? usage.candidates_token_count
-    );
-    const inputTokens = parseTokenValue(
-      usage.input_tokens ?? usage.inputTokens ?? usage.input_tokens_total ?? usage.inputTokensTotal
-    );
-    const outputTokens = parseTokenValue(
-      usage.output_tokens ?? usage.outputTokens ?? usage.output_tokens_total ?? usage.outputTokensTotal
-    );
-    const totalTokens = parseTokenValue(
-      usage.totalTokenCount ?? usage.total_tokens ?? usage.totalTokens ?? usage.total_token_count
-    );
-
-    const derivedInputTokens = inputTokens || promptTokens;
-    const derivedOutputTokens = outputTokens || candidateTokens;
-    const derivedTotalTokens = totalTokens || derivedInputTokens + derivedOutputTokens;
-
-    const inputCost = (derivedInputTokens / 1_000_000) * 3.0;
-    const outputCost = (derivedOutputTokens / 1_000_000) * 15.0;
+    // Calculate cost
+    const inputCost = (inputTokens / 1_000_000) * 3.0;
+    const outputCost = (outputTokens / 1_000_000) * 15.0;
     const cost = inputCost + outputCost;
 
-    this.totalInputTokens += derivedInputTokens;
-    this.totalOutputTokens += derivedOutputTokens;
+    // Accumulate session totals
+    this.totalInputTokens += inputTokens;
+    this.totalOutputTokens += outputTokens;
     this.totalCost += cost;
 
-    if (derivedInputTokens || derivedOutputTokens || derivedTotalTokens) {
-      this.debug(
-        `Usage tracked: In=${derivedInputTokens}, Out=${derivedOutputTokens}, Total=${derivedTotalTokens}, Cost=$${cost.toFixed(6)}`
-      );
+    // Log if we tracked any tokens
+    if (inputTokens || outputTokens) {
+      const total = inputTokens + outputTokens;
+      this.debug(`Usage tracked: In=${inputTokens}, Out=${outputTokens}, Total=${total}, Cost=$${cost.toFixed(6)}`);
     }
   }
 
   printSessionSummary() {
     console.log('\n' + '='.repeat(50));
-    console.log(`${COLORS.bright}${COLORS.fgGreen}📊 SESSION METRICS SUMMARY${COLORS.reset}`);
+    console.log(chalk.bold.green('📊 SESSION METRICS SUMMARY'));
     console.log(`  Total Input Tokens:  ${this.totalInputTokens}`);
     console.log(`  Total Output Tokens: ${this.totalOutputTokens}`);
     console.log(`  Total Token Count:   ${this.totalInputTokens + this.totalOutputTokens}`);

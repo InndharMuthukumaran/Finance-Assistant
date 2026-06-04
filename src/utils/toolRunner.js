@@ -24,7 +24,7 @@ export async function executeTool(name, input) {
   logger.toolCall(name, input);
   try {
     const result = await toolFn(input);
-    logger.toolResult(name, result);
+    logger.toolSuccess(name, result);
     return result;
   } catch (error) {
     logger.error(`Error executing tool "${name}": ${error.message}`);
