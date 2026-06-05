@@ -1,90 +1,90 @@
 import { getModel } from '../utils/gemini.js';
 import { allToolsSchemas, executeTool } from '../utils/toolRunner.js';
 import { logger } from '../utils/logger.js';
+import { toolCache } from '../utils/cache.js';
 
 /**
- * Cost Optimization Pattern
- * Demonstrates making decisions to reduce model usage/costs by
- * preferring local tools or concise follow-ups when a cost threshold
- * is exceeded.
+ * Process a single message turn in the conversation, handling tool execution with cache support.
+ */
+async function processQueryWithCaching(chat, query) {
+  const result = await chat.sendMessage(query);
+  const response = result.response;
+  logger.trackUsage(response.usageMetadata);
+  
+  const functionCalls = response.functionCalls();
+  if (!functionCalls || functionCalls.length === 0) {
+    console.log(`\n💬 Gemini's Response:\n${response.text()}\n`);
+    return;
+  }
+
+  logger.info(`Gemini requested ${functionCalls.length} tool call(s).`);
+  
+  const toolResponses = [];
+  for (const fc of functionCalls) {
+    try {
+      // Execute the tool with caching enabled
+      const r = await executeTool(fc.name, fc.args, { useCache: true });
+      toolResponses.push({ 
+        functionResponse: { 
+          name: fc.name, 
+          response: { result: JSON.stringify(r) } 
+        } 
+      });
+    } catch (e) {
+      toolResponses.push({ 
+        functionResponse: { 
+          name: fc.name, 
+          response: { error: e.message || String(e) } 
+        } 
+      });
+    }
+  }
+
+  const finalResult = await chat.sendMessage(toolResponses);
+  logger.trackUsage(finalResult.response.usageMetadata);
+  console.log(`\n💬 Gemini's Final Response:\n${finalResult.response.text()}\n`);
+}
+
+/**
+ * Cost Optimization Pattern Demo (Tool Call Caching)
+ * 
+ * Demonstrates how to cache tool calling data using `cache.js` to avoid
+ * redundant calls to external APIs or heavy computations, reducing costs and latency.
  */
 export async function runCostOptimizeDemo() {
-	const prompt = `You are a budget-savvy assistant. Given these monthly expenses, provide 3 short recommendations to reduce costs.
-- Coffee: $120
-- Streaming: $45
-- Cloud hosting: $210
-- Subscriptions: $30
-If you need to compute totals, prefer calling local tools but keep output concise.`;
+  logger.info(`Starting Cost Optimization (Tool Call Caching) Demo...`);
+  
+  // Clear any pre-existing cache entries to start fresh
+  toolCache.clear();
+  
+  let metrics = toolCache.getMetrics();
+  console.log(`\n🔋 Cache Stats initially: size=${metrics.size}, hits=${metrics.hits}, misses=${metrics.misses}\n`);
 
-	logger.info(`Starting Cost Optimization Demo...`);
-	logger.info(`Query: "${prompt.split('\n')[0]}..."`);
+  const model = getModel(allToolsSchemas);
 
-	const model = getModel(allToolsSchemas);
-	const chat = model.startChat();
+  // --- Session 1 ---
+  logger.info(`--- Starting Chat Session 1 (Fresh Cache) ---`);
+  const chat1 = model.startChat();
+  const query1 = "I have expenses of $120 for coffee and $45 for streaming. Can you add them? Also, please convert $210 USD to EUR so I can compare it.";
+  logger.info(`Sending Request 1: "${query1}"`);
+  
+  await processQueryWithCaching(chat1, query1);
 
-	const result = await chat.sendMessage(prompt);
-	const response = result.response;
-	logger.trackUsage(response.usageMetadata);
+  metrics = toolCache.getMetrics();
+  console.log(`\n🔋 Cache Stats after Request 1: size=${metrics.size}, hits=${metrics.hits}, misses=${metrics.misses}\n`);
 
-	// Compute immediate request cost from usageMetadata
-	const usage = response.usageMetadata || {};
-	const parse = (v) => (typeof v === 'number' ? v : Number(v) || 0);
-	const promptTokens = parse(usage.promptTokenCount ?? usage.prompt_tokens ?? usage.promptTokens);
-	const candidateTokens = parse(usage.candidatesTokenCount ?? usage.candidates_tokens ?? usage.candidateTokens);
-	const derivedInput = promptTokens;
-	const derivedOutput = candidateTokens;
-	const inputCost = (derivedInput / 1_000_000) * 3.0;
-	const outputCost = (derivedOutput / 1_000_000) * 15.0;
-	const immediateCost = inputCost + outputCost;
+  // --- Session 2 ---
+  logger.info(`--- Starting Chat Session 2 (New Session, Reusing Cache) ---`);
+  // Using a new chat session so the LLM doesn't have the answers in history and is forced to call the tools again.
+  const chat2 = model.startChat();
+  const query2 = "Can you check what is $120 plus $45? Also, I need to know how much is $210 USD in EUR. Please provide both answers.";
+  logger.info(`Sending Request 2 (Identical/Similar calculations): "${query2}"`);
+  
+  await processQueryWithCaching(chat2, query2);
 
-	logger.debug(`Immediate estimated cost: $${immediateCost.toFixed(6)}`);
-
-	const COST_THRESHOLD = 0.0005; // demo threshold
-
-	const functionCalls = response.functionCalls();
-	if (!functionCalls || functionCalls.length === 0) {
-		console.log(`\n💬 Gemini's Response:\n${response.text()}\n`);
-		logger.printSessionSummary();
-		return;
-	}
-
-	// If cost is high, avoid another model roundtrip: resolve locally and summarize.
-	if (immediateCost > COST_THRESHOLD) {
-		logger.warn(`Estimated cost ${immediateCost.toFixed(6)} exceeds threshold; resolving locally.`);
-		const localResults = [];
-		for (const fc of functionCalls) {
-			try {
-				const r = await executeTool(fc.name, fc.args);
-				localResults.push({ name: fc.name, result: r });
-				logger.toolSuccess(fc.name, r);
-			} catch (e) {
-				logger.toolError(fc.name, e.message || String(e));
-			}
-		}
-
-		// Summarize locally without asking Gemini again
-		console.log('\n💬 Cost-Optimized Summary (local):');
-		console.log(localResults.map((x) => `${x.name}: ${JSON.stringify(x.result)}`).join('\n'));
-		logger.printSessionSummary();
-		return;
-	}
-
-	// Otherwise, execute tools and send results back to Gemini for a final polished answer
-	logger.info(`Executing ${functionCalls.length} tool call(s) and returning concise answer.`);
-	const toolResponses = [];
-	for (const fc of functionCalls) {
-		try {
-			const r = await executeTool(fc.name, fc.args);
-			toolResponses.push({ functionResponse: { name: fc.name, response: { result: JSON.stringify(r) } } });
-			logger.toolSuccess(fc.name, r);
-		} catch (e) {
-			logger.toolError(fc.name, e.message || String(e));
-			toolResponses.push({ functionResponse: { name: fc.name, response: { error: String(e) } } });
-		}
-	}
-
-	const finalResult = await chat.sendMessage(toolResponses);
-	logger.trackUsage(finalResult.response.usageMetadata);
-	console.log(`\n💬 Gemini's Final Response:\n${finalResult.response.text()}\n`);
-	logger.printSessionSummary();
+  metrics = toolCache.getMetrics();
+  console.log(`\n🔋 Final Cache Stats: size=${metrics.size}, hits=${metrics.hits}, misses=${metrics.misses}`);
+  console.log(`💡 Saved ${metrics.hits} external tool execution(s) via cache!`);
+  
+  logger.printSessionSummary();
 }
