@@ -52,8 +52,8 @@ const delegateToCalculatorSchema = {
 const delegateToResearchSchema = {
   name: 'delegate_to_research_agent',
   description:
-    'Delegate a data lookup or currency conversion sub-task to the Research Agent. ' +
-    'Use this for: fetching expense totals, checking budgets, converting currencies. ' +
+    'Delegate a data lookup, currency conversion, or financial knowledge query to the Research Agent. ' +
+    'Use this for: fetching expense totals, checking budgets, converting currencies, or looking up reference rules (like 50/30/20 budget or emergency funds). ' +
     'Pass a clear, self-contained task description. ' +
     'The Research Agent will return raw data as text — do not ask it to do arithmetic.',
   input_schema: {
@@ -62,7 +62,7 @@ const delegateToResearchSchema = {
       task: {
         type: 'string',
         description:
-          'A self-contained research task, e.g. "Fetch total expenses across all categories" or "Convert 115.75 USD to EUR"'
+          'A self-contained research task, e.g. "Fetch total expenses across all categories", "Convert 115.75 USD to EUR", or "Find what the 50/30/20 rule is"'
       }
     },
     required: ['task']
@@ -107,7 +107,7 @@ export async function runOrchestrator(userQuery) {
     'You are an Orchestrator AI for a personal finance assistant. ' +
     'Your job is to ONLY coordinate and delegate — you do NOT answer directly. ' +
     'Break the user query into sub-tasks and call the appropriate delegate tools:\n' +
-    '  • delegate_to_research_agent — for data lookups (expenses, budgets, currency conversion)\n' +
+    '  • delegate_to_research_agent — for data lookups (expenses, budgets, currency conversion, looking up financial guidelines/reference rules)\n' +
     '  • delegate_to_calculator_agent — for math operations (percentages, totals, savings)\n' +
     'After receiving all sub-task results, synthesize a clear final answer for the user. ' +
     'Always delegate first; never answer without using tools.';

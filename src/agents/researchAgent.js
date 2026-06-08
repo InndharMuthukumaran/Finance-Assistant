@@ -4,12 +4,13 @@ import { logger } from '../utils/logger.js';
 import { currencySchema } from '../tools/currency.js';
 import { expenseSchema } from '../tools/expense.js';
 import { budgetSchema } from '../tools/budget.js';
+import { knowledgeSchema } from '../tools/knowledge.js';
 
 /**
  * Research Agent
  *
  * A specialized sub-agent that handles data lookups and currency operations.
- * It has access to: convert_currency, track_expense, and manage_budget.
+ * It has access to: convert_currency, track_expense, manage_budget, and lookup_financial_knowledge.
  * It does NOT have access to the calculator tool — math is the Calculator Agent's job.
  *
  * This enforces the principle that each agent stays in its own lane.
@@ -21,17 +22,17 @@ import { budgetSchema } from '../tools/budget.js';
 export async function runResearchAgent(task) {
   logger.agentStep('RESEARCH AGENT', `Received sub-task: "${task}"`);
 
-  // This agent gets data tools only — no calculator
-  const model = getModel([currencySchema, expenseSchema, budgetSchema]);
+  // This agent gets data tools and knowledge RAG tool
+  const model = getModel([currencySchema, expenseSchema, budgetSchema, knowledgeSchema]);
   const chat = model.startChat({
     history: [
       {
         role: 'user',
-        parts: [{ text: 'You are a specialist research agent for a personal finance assistant. You fetch expense data, check budgets, and convert currencies. You do NOT do arithmetic — report raw numbers and let a math specialist handle calculations. Be concise and structured in your responses.' }]
+        parts: [{ text: 'You are a specialist research agent for a personal finance assistant. You fetch expense data, check budgets, convert currencies, and look up financial guidelines/rules from the local knowledge base. You do NOT do arithmetic — report raw numbers and let a math specialist handle calculations. Be concise and structured in your responses.' }]
       },
       {
         role: 'model',
-        parts: [{ text: 'Understood. I am a research specialist. I will fetch expenses, budgets, and currency data using my tools and report raw figures clearly. I will not perform arithmetic calculations.' }]
+        parts: [{ text: 'Understood. I am a research specialist. I will fetch expenses, budgets, currency data, and financial guidelines using my tools and report raw figures clearly. I will not perform arithmetic calculations.' }]
       }
     ]
   });

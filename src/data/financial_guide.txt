@@ -1,0 +1,24 @@
+# Personal Finance Reference Guide
+
+## 1. The 50/30/20 Budgeting Rule
+The 50/30/20 rule is a simple, effective method for managing your budget. It splits your after-tax income into three categories:
+- **50% Needs**: Essential expenses that you must pay to survive. This includes rent or mortgage payments, groceries, utilities, basic insurance, transportation, and minimum debt payments.
+- **30% Wants**: Flexible spending on lifestyle choices that are not essential. This includes dining out, shopping, hobbies, entertainment, streaming subscriptions, and travel.
+- **20% Savings and Debt**: Financial goals to build wealth or pay down debt. This includes emergency fund contributions, retirement savings (like a 401k or IRA), stock market investments, and extra debt payments beyond the minimum.
+
+## 2. Setting Up an Emergency Fund
+An emergency fund is money set aside specifically to cover unexpected life events, such as medical emergencies, car repairs, home maintenance, or sudden job loss.
+- **Size**: Aim to save 3 to 6 months of essential living expenses (your "Needs" budget). For instance, if your monthly essential expenses are $3,000, your target fund should be between $9,000 and $18,000.
+- **Where to keep it**: Keep this money in a High-Yield Savings Account (HYSA). A HYSA offers easy access (liquidity) while earning 4-5% interest, unlike regular checking accounts which yield near 0%.
+- **Rule of thumb**: Never invest your emergency fund in the stock market, as a market crash could reduce your funds right when you need them most.
+
+## 3. Debt Repayment Strategies
+When tackling high-interest debts like credit cards or personal loans, choose one of these two popular strategies:
+- **The Debt Snowball**: List your debts from smallest balance to largest. Pay the minimums on all debts except the smallest. Put all extra cash toward the smallest debt until it is paid off. Once gone, roll its payment into the next smallest. This builds psychological momentum.
+- **The Debt Avalanche**: List your debts from highest interest rate to lowest interest rate. Pay the minimums on all debts except the one with the highest interest. Put all extra cash toward the highest interest debt. This mathematically saves you the most money in interest charges over time.
+
+## 4. Basic Investing & Retirement
+Investing is how you grow your wealth over the long term to beat inflation and prepare for retirement.
+- **401(k) Match**: If your employer offers a 401(k) match, contribute up to the maximum match percentage immediately. It is essentially free money (a 100% return on investment).
+- **Index Funds**: For long-term growth, invest in broad-market low-cost Index Funds (like S&P 500 ETFs). They track the performance of the entire market, providing built-in diversification.
+- **Compound Interest**: The earlier you start investing, the more time your money has to compound. Compound interest allows you to earn interest on your interest, creating exponential growth over 10, 20, or 30 years.
